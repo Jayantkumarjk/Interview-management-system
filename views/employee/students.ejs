@@ -1,0 +1,59 @@
+<% include('../layouts/header.ejs')%>
+<h1>List of students</h1>
+
+
+
+<form action="" method ="POST" >
+    <input type = "text" name = "name" placeholder="Name" required>
+    <br><br>
+    <input type ="text" name="college"  placeholder="College" required>
+    <br><br>
+    <input type= "text" name="dsa" placeholder="DSA Score" required>
+    <br><br>
+    <input type = "text" name="webd"  placeholder="webD score" required>
+    <br><br>
+    <input type="text"   name="react"    placeholder="React score" required>
+    <br><br>
+    <input type="text"   name="status"    placeholder="Application status" required>
+    <br><br>
+    <input type="submit" value="Submit">
+</form>
+<br>
+<a href = "/exportuser">Export User</a>
+<table width = "50%">
+    <tr>
+        <th>Name</th>
+        <th>College</th>
+        <th>Interview Status</th>
+        <th>DSA Score</th>
+        <th>Web Development score</th>
+        <th>React Score</th>
+
+    </tr>
+    <%
+    if(users.length > 0){
+        for (let i = 0; i <users.length;i++){
+            %>
+            <tr>
+                <td><%= users[i].name %></td>
+                <td><%= users[i].college %></td>
+                <td><%= users[i].status %></td>
+                <td><%= users[i].dsa %></td>
+                <td><%= users[i].webd %></td>
+                <td><%= users[i].react %></td>
+                
+            </tr>
+            <%
+        }
+
+    }else{
+        %>
+        <tr>
+            <td colspan="5"> User not found</td>
+        </tr>
+        <%
+    }
+    %>
+</table>
+<br>
+<% include('../layouts/header.ejs')%>
