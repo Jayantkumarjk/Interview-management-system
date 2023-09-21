@@ -3,6 +3,8 @@ const Interview = require("../models/interviewsModel")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken");
 const config = require("../config/config")
+const nodemailer = require("nodemailer");
+const randomstring = require("randomstring");
 const Student = require("../models/studentModel");
 const exceljs = require("exceljs");
 
@@ -25,6 +27,42 @@ const securePassword = async(password)=>{
         console.log(error.message)
     }
 }
+
+
+// for reset password send mail
+
+const sendResetPasswordMail = async(name,email,token)=>{
+    try{
+        const transporter = nodemailer.createTransport({
+            host:'smtp.gmail.com',
+            port:587,
+            secure:false,
+            requireTLS:true,
+            auth:{
+                user:config.emailUser,
+                pass:config.emailPassword
+            }
+        });
+
+        const mailOptions = {
+            from:config.emailUser,
+            to:email,
+            subject:'for Reset Password',
+            html:'<p>Hii '+name+', please click hear to <a href="http://127.0.0.1:3000/forget-password?token='+token+'">Reset Password</a>Reset your password. </p>'
+        }
+        transporter.sendMail(mailOptions,function(error,info){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Email has been sent:-",info.response);
+            }
+        })
+
+    }catch(error){
+        console.log(error.message);
+    }
+}
+
 
 //Load sign up page
 const loadSignUpForm = async(req,res)=>{
@@ -117,6 +155,68 @@ const loadInterviewsPage = async(req,res)=>{
     }
 }
 
+// Load Forget Password Page
+
+const forgetLoad = async(req,res)=>{
+    try{
+        res.render('forget');
+    }catch(error){
+        console.log(error.message);
+    }
+}
+
+// forget verify
+const forgetVerify = async(req,res)=>{
+    try{
+        email = req.body.email;
+        employeeData = await Employee.findOne({email:email});
+        if(employeeData){
+                const randomString = randomstring.generate();
+                console.log(randomString)
+                const updatedData = await Employee.updateOne({email:email},{$set:{token:randomString}})
+                sendResetPasswordMail(employeeData.name,employeeData.email,randomString)
+                res.render('forget',{message:"Please check you mail to reset password"})
+        }else{
+            res.render('forget',{message:"User email is incorrect"})
+        }
+    }catch(error){
+        console.log(error);
+    }
+}
+
+// forget password page
+const forgetPasswordLoad = async(req,res)=>{
+    try{
+        const token = req.query.token;
+        const tokenData = await Employee.findOne({token:token})
+        if(tokenData){
+            res.render('forget-password',{employee_id:tokenData._id})
+        }else{
+            res.render('404',{message:"Token is in valid"})
+        }
+    }catch(error){
+        console.log(error.message)
+    }
+ }
+
+
+const resetPassword = async(req,res)=>{
+    try{
+        const password = req.body.password;
+        const employee_id = req.body.user_id;
+        const secure_password = await securePassword(password);
+        const updatedData = await User.findByIdAndUpdate({_id: employee_id},{$set:{password:secure_password, token : ''}});
+        res.redirect('/login');
+        
+    }catch(error){
+        console.log(error)
+    }
+ }
+
+
+
+
+
 // Insert the interview details
 const insertInterviews = async(req,res)=>{
     try{
@@ -134,6 +234,8 @@ const insertInterviews = async(req,res)=>{
         console.log(error.message)
     }
 }
+
+
 
 // Export the student details
 const exportUsers = async(req,res)=>{
@@ -193,6 +295,9 @@ module.exports = {
     loadStudentsPage,
     loadInterviewsPage,
     insertInterviews,
-    exportUsers
-    
+    exportUsers,
+    forgetLoad,
+    forgetPasswordLoad,
+    forgetVerify,
+    resetPassword
 }
